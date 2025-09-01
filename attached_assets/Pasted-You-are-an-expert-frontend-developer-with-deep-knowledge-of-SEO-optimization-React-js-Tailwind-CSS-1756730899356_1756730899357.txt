@@ -1,0 +1,53 @@
+You are an expert frontend developer with deep knowledge of SEO optimization, React.js, Tailwind CSS, and modern web security practices. 
+Your task is to create a **production-ready, industry-standard frontend** for a website that displays **SEO rankings, brand rankings, social media rankings, performance metrics, and a combined overall ranking** in a visually clear and professional dashboard format.
+
+### Requirements:
+1. **Framework & Styling**
+   - Use **React.js** + **Vite** (or CRA if needed).
+   - Use **Tailwind CSS** for a modern, responsive, and clean UI.
+   - Include **Framer Motion** animations for smooth transitions.
+   - Layout should follow **grid-based structure** (professional, not cluttered).
+
+2. **Components**
+   - **Navbar** (with logo + navigation).
+   - **Sidebar** (for different ranking categories: Brand, SEO, Social Media, Performance, Combined).
+   - **Dashboard Cards** showing ranking values.
+   - **Charts** (use Recharts library) to visualize ranking trends.
+   - **Table/List** for detailed ranking breakdowns.
+   - **Search & Filter Controls** for rankings.
+   - **Footer** with branding & links.
+
+3. **SEO & Performance**
+   - Use **React Helmet Async** for meta tags (title, description, keywords, Open Graph).
+   - Add **structured data (JSON-LD)** for better SEO indexing.
+   - Lazy-load heavy components.
+   - Mobile-first & responsive.
+
+4. **Security**
+   - Use **DOMPurify** to sanitize any dynamic HTML content.
+   - Set security headers via **Helmet Async**.
+   - Avoid inline styles/scripts.
+   - Follow OWASP frontend security best practices.
+
+5. **User Experience**
+   - Fresh, minimalistic, but **premium dashboard look**.
+   - Smooth animations (Framer Motion).
+   - Consistent color palette (professional theme).
+   - Accessible (ARIA roles, contrast ratios).
+
+6. **Extra Features**
+   - Dark/Light mode toggle.
+   - Export rankings (CSV/JSON).
+   - Tooltips on hover for clarity.
+   - Example dummy data for rankings (so UI looks alive).
+
+7. **Code Quality**
+   - Write clean, modular, and reusable components.
+   - Follow best React project structure (`/components`, `/pages`, `/utils`, `/data`).
+   - Comment code where necessary.
+   - Assume this will be extended into a production app.
+
+### Final Output:
+Deliver a **full working React project** with the above specifications. 
+The final design must look like a **real-world SEO analytics dashboard** created by top industry developers. 
+The UI should feel **fresh, simple, modern, and professional**, with a strong emphasis on **SEO optimization, performance, and security**.
