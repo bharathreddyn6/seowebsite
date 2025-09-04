@@ -53,7 +53,7 @@ export default function Footer() {
                 <Linkedin className="h-4 w-4" />
               </a>
               <a 
-                href="#" 
+                href="https://github.com/bharathreddyn6/seowebsite" 
                 className="text-muted-foreground hover:text-primary transition-colors p-1 rounded"
                 aria-label="GitHub"
               >

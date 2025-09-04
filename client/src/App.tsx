@@ -11,6 +11,8 @@ import SocialMedia from "@/pages/social-media";
 import Performance from "@/pages/performance";
 import Settings from "@/pages/settings";
 import SEOHelmet from "@/lib/seo";
+import LoginPage from "@/pages/login";
+import SignupPage from "@/pages/signup";
 
 function Router() {
   return (
@@ -21,6 +23,8 @@ function Router() {
       <Route path="/social" component={SocialMedia} />
       <Route path="/performance" component={Performance} />
       <Route path="/settings" component={Settings} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
       <Route component={NotFound} />
     </Switch>
   );
