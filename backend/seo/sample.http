@@ -1,0 +1,29 @@
+### Health
+GET http://localhost:8000/health
+
+### Analyze
+POST http://localhost:8000/api/analyze
+Content-Type: application/json
+
+{
+  "url": "https://example.com",
+  "categories": ["seo","brand","social"]
+}
+
+### Summary
+GET http://localhost:8000/api/summary?url=https://example.com&category=seo&days=7
+
+### Issues
+GET http://localhost:8000/api/issues?url=https://example.com&days=7
+
+### Rankings (search filter)
+GET http://localhost:8000/api/rankings?url=https://example.com&query=exam
+
+### Trends
+GET http://localhost:8000/api/trends?url=https://example.com&days=7
+
+### Export JSON
+GET http://localhost:8000/api/export/json?url=https://example.com
+
+### Export CSV
+GET http://localhost:8000/api/export/csv?url=https://example.com

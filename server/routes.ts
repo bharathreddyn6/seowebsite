@@ -1,155 +1,151 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertWebsiteAnalysisSchema, insertRankingHistorySchema } from "@shared/schema";
-import { z } from "zod";
+import type { Express, Request, Response } from "express";
+import fetch from "node-fetch";
+import * as cheerio from "cheerio";
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  
-  // Analyze website endpoint
-  app.post("/api/analyze", async (req, res) => {
-    try {
-      const { url } = insertWebsiteAnalysisSchema.parse(req.body);
-      
-      // Simulate SEO analysis (in production, this would call real SEO APIs)
-      const analysisResult = await simulateWebsiteAnalysis(url);
-      
-      const analysis = await storage.createWebsiteAnalysis(analysisResult);
-      
-      // Create initial ranking history entries
-      const metrics = ['overall', 'seo', 'brand', 'social', 'performance'];
-      for (const metric of metrics) {
-        await storage.createRankingHistory({
-          websiteAnalysisId: analysis.id,
-          metric,
-          value: getScoreForMetric(analysisResult, metric),
-          change: 0, // First analysis has no change
-        });
-      }
-      
-      res.json(analysis);
-    } catch (error) {
-      res.status(400).json({ 
-        message: error instanceof Error ? error.message : "Invalid request" 
-      });
-    }
-  });
+// In-memory store for analyses
+const analyses: any[] = [];
 
-  // Get recent analyses
-  app.get("/api/analyses", async (req, res) => {
-    try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-      const analyses = await storage.getRecentAnalyses(limit);
-      res.json(analyses);
-    } catch (error) {
-      res.status(500).json({ 
-        message: "Failed to fetch analyses" 
-      });
-    }
-  });
-
-  // Get ranking trends
-  app.get("/api/trends/:metric", async (req, res) => {
-    try {
-      const { metric } = req.params;
-      const days = req.query.days ? parseInt(req.query.days as string) : 30;
-      const trends = await storage.getRankingTrends(metric, days);
-      res.json(trends);
-    } catch (error) {
-      res.status(500).json({ 
-        message: "Failed to fetch ranking trends" 
-      });
-    }
-  });
-
-  // Export data endpoint
-  app.get("/api/export/:format", async (req, res) => {
-    try {
-      const { format } = req.params;
-      const analyses = await storage.getRecentAnalyses(100);
-      
-      if (format === 'csv') {
-        const csv = convertToCSV(analyses);
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename=rankings-export.csv');
-        res.send(csv);
-      } else if (format === 'json') {
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', 'attachment; filename=rankings-export.json');
-        res.json(analyses);
-      } else {
-        res.status(400).json({ message: "Invalid export format" });
-      }
-    } catch (error) {
-      res.status(500).json({ 
-        message: "Failed to export data" 
-      });
-    }
-  });
-
-  const httpServer = createServer(app);
-  return httpServer;
+function scoreRange(val: number, max = 100) {
+  return Math.max(0, Math.min(Math.round(val), max));
 }
 
-// Simulate website analysis (replace with real SEO API calls in production)
-async function simulateWebsiteAnalysis(url: string) {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Generate realistic scores based on URL analysis
-  const baseScore = Math.floor(Math.random() * 30) + 70; // 70-100 range
-  
+function computeScores(info: any) {
+  const checks = {
+    hasTitle: info.title ? 1 : 0,
+    titleLenGood: info.title && info.title.length >= 10 && info.title.length <= 60 ? 1 : 0,
+    hasMetaDesc: info.metaDescription ? 1 : 0,
+    metaDescLenGood: info.metaDescription && info.metaDescription.length >= 50 && info.metaDescription.length <= 160 ? 1 : 0,
+    hasH1: info.h1Count > 0 ? 1 : 0,
+    imagesWithAltRatio: info.imagesTotal ? (info.imagesWithAlt / info.imagesTotal) : 1,
+    hasViewport: info.hasViewport ? 1 : 0,
+    hasCanonical: info.hasCanonical ? 1 : 0,
+    wordCountScore: Math.min(1, info.wordCount / 3000),
+  };
+
+  const seo = (
+    checks.hasTitle * 10 +
+    checks.titleLenGood * 10 +
+    checks.hasMetaDesc * 10 +
+    checks.metaDescLenGood * 10 +
+    checks.hasH1 * 10 +
+    checks.imagesWithAltRatio * 10 +
+    checks.hasViewport * 10 +
+    checks.hasCanonical * 10 +
+    checks.wordCountScore * 20
+  );
+
+  const brand = (info.ogTitle || info.ogImage ? 70 : 50) + (info.brandMentions ? 10 : 0);
+  const social = (info.twitterCard || info.ogTitle ? 70 : 50);
+
+  let perf = 70;
+  if (info.responseTimeMs) {
+    if (info.responseTimeMs < 200) perf = 90;
+    else if (info.responseTimeMs < 500) perf = 75;
+    else if (info.responseTimeMs < 1000) perf = 60;
+    else perf = 40;
+  }
+  if (info.totalBytes && info.totalBytes > 500000) perf -= 10;
+
+  const overall = Math.round((seo + brand + social + perf) / 4);
   return {
-    url,
-    overallScore: baseScore,
-    seoScore: Math.min(100, baseScore + Math.floor(Math.random() * 10) - 5),
-    brandScore: Math.min(100, baseScore + Math.floor(Math.random() * 15) - 10),
-    socialScore: Math.min(100, baseScore + Math.floor(Math.random() * 20) - 10),
-    performanceScore: Math.min(100, baseScore + Math.floor(Math.random() * 10) - 5),
-    metrics: {
-      pageSpeed: Math.floor(Math.random() * 20) + 80,
-      mobileScore: Math.floor(Math.random() * 10) + 90,
-      security: Math.floor(Math.random() * 5) + 95,
-      userExperience: Math.floor(Math.random() * 15) + 85,
-    },
-    keywords: [
-      { keyword: "javascript framework", rank: 2, change: 2 },
-      { keyword: "web development", rank: 5, change: -1 },
-      { keyword: "frontend tools", rank: 1, change: 0 },
-      { keyword: "react development", rank: 3, change: 1 },
-    ],
-    competitors: [
-      { domain: "competitor1.com", position: "above" },
-      { domain: "competitor2.com", position: "below" },
-      { domain: "competitor3.com", position: "below" },
-    ],
+    overallScore: scoreRange(overall),
+    seoScore: scoreRange(seo),
+    brandScore: scoreRange(brand),
+    socialScore: scoreRange(social),
+    performanceScore: scoreRange(perf),
   };
 }
 
-function getScoreForMetric(analysis: any, metric: string): number {
-  switch (metric) {
-    case 'overall': return analysis.overallScore;
-    case 'seo': return analysis.seoScore;
-    case 'brand': return analysis.brandScore;
-    case 'social': return analysis.socialScore;
-    case 'performance': return analysis.performanceScore;
-    default: return 0;
-  }
-}
+export async function registerRoutes(app: Express) {
+  // Return all past analyses
+  app.get("/api/analyses", (_req: Request, res: Response) => {
+    res.json(analyses);
+  });
 
-function convertToCSV(analyses: any[]): string {
-  if (analyses.length === 0) return '';
-  
-  const headers = ['URL', 'Overall Score', 'SEO Score', 'Brand Score', 'Social Score', 'Performance Score', 'Created At'];
-  const rows = analyses.map(analysis => [
-    analysis.url,
-    analysis.overallScore,
-    analysis.seoScore,
-    analysis.brandScore,
-    analysis.socialScore,
-    analysis.performanceScore,
-    analysis.createdAt.toISOString(),
-  ]);
-  
-  return [headers, ...rows].map(row => row.join(',')).join('\n');
+  app.get("/api/trends/:type/:days", (req: Request, res: Response) => {
+    const { type, days } = req.params;
+    res.json({
+      type,
+      days: parseInt(days, 10) || 7,
+      data: [], // you can fill this later with trend data
+    });
+  });
+
+  app.post("/api/analyze", async (req: Request, res: Response) => {
+    try {
+      const { url } = req.body || {};
+      if (!url || typeof url !== "string") {
+        return res.status(400).json({ message: "Invalid request: url is required" });
+      }
+
+      let target = url;
+      if (!/^https?:\/\//i.test(target)) target = "http://" + target;
+
+      const start = Date.now();
+      const resp = await fetch(target, { redirect: "follow", timeout: 15000 });
+      const responseTimeMs = Date.now() - start;
+
+      const status = resp.status;
+      const headers = Object.fromEntries(resp.headers.entries());
+      const buffer = await resp.arrayBuffer();
+      const totalBytes = buffer.byteLength;
+      let html = "";
+      try {
+        html = Buffer.from(buffer).toString("utf-8");
+      } catch {
+        html = "";
+      }
+
+      const $ = cheerio.load(html || "");
+
+      const title = $("head > title").text().trim() || null;
+      const metaDescription = $('meta[name="description"]').attr("content") || null;
+      const h1Count = $("h1").length;
+      const imagesTotal = $("img").length;
+      const imagesWithAlt = $("img").filter((i, el) => $(el).attr("alt")?.trim().length > 0).length;
+      const hasViewport = !!$('meta[name="viewport"]').attr("content");
+      const hasCanonical = !!$('link[rel="canonical"]').attr("href");
+      const ogTitle = $('meta[property="og:title"]').attr("content") || null;
+      const ogImage = $('meta[property="og:image"]').attr("content") || null;
+      const twitterCard = $('meta[name="twitter:card"]').attr("content") || null;
+      const wordCount = $("body").text().split(/\s+/).filter(Boolean).length;
+
+      const info = {
+        url: target,
+        status,
+        responseTimeMs,
+        totalBytes,
+        title,
+        metaDescription,
+        h1Count,
+        imagesTotal,
+        imagesWithAlt,
+        hasViewport,
+        hasCanonical,
+        ogTitle,
+        ogImage,
+        twitterCard,
+        wordCount,
+        brandMentions: false,
+        headers,
+      };
+
+      const scores = computeScores(info);
+
+      const analysis = {
+        id: "a" + Date.now(),
+        createdAt: new Date().toISOString(),
+        ...info,
+        ...scores,
+      };
+
+      // Store it in memory
+      analyses.unshift(analysis);
+
+      res.json({ analysis });
+    } catch (err: any) {
+      console.error("Analyze error:", err?.message);
+      res.status(500).json({ message: "Failed to fetch or analyze the URL", detail: err?.message });
+    }
+  });
 }
