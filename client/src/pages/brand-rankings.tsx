@@ -125,6 +125,9 @@ export default function BrandRankings() {
             animate="visible"
             className="space-y-8"
           >
+
+
+
             {/* Page Header */}
             <motion.div variants={itemVariants} className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -136,6 +139,10 @@ export default function BrandRankings() {
               </div>
             </motion.div>
 
+
+
+            
+
             {/* Brand Metrics Grid */}
             <motion.div 
               variants={itemVariants}
@@ -145,6 +152,11 @@ export default function BrandRankings() {
                 <MetricCard key={index} {...card} />
               ))}
             </motion.div>
+
+
+
+
+
 
             {/* Charts and Analysis */}
             <motion.div 
