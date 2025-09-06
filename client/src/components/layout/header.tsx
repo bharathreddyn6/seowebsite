@@ -18,12 +18,12 @@ export default function Header() {
           <div>
             <h2 className="text-2xl font-bold gradient-text">Dashboard Overview</h2>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
-              <Clock className="h-3 w-3" />
+               {/*<Clock className="h-3 w-3" />
               <span data-testid="text-last-updated">Last updated: 2 min ago</span>
               <div className="flex items-center space-x-1 ml-4">
                 <div className="status-dot status-healthy"></div>
                 <span className="text-xs">Live</span>
-              </div>
+              </div>*/}
             </div>
           </div>
         </motion.div>
@@ -61,7 +61,7 @@ export default function Header() {
                     initial={{ rotate: -90, opacity: 0 }}
                     animate={{ rotate: 0, opacity: 1 }}
                     exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.7 }}
                   >
                     <Moon className="h-4 w-4 text-primary" />
                   </motion.div>
@@ -71,6 +71,7 @@ export default function Header() {
           </motion.div>
           
           {/* Notifications */}
+          {/*
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="outline"
@@ -89,15 +90,16 @@ export default function Header() {
               </motion.span>
             </Button>
           </motion.div>
+          */}
 
-          {/* Premium Badge */}
+          {/* Premium Badge .......... add Login/SignUp Page */}
           <motion.div 
             className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full border border-primary/20"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
             <Sparkles className="h-3 w-3 text-secondary" />
-            <span className="text-xs font-semibold text-foreground">Pro</span>
+            <span className="text-xs font-semibold text-foreground">Login</span>
           </motion.div>
         </motion.div>
       </div>

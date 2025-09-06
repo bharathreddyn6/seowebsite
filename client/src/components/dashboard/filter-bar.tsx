@@ -64,6 +64,7 @@ export default function FilterBar({
             </SelectContent>
           </Select>
           
+          {/*
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-[140px]" data-testid="select-category">
               <SelectValue />
@@ -75,8 +76,10 @@ export default function FilterBar({
               <SelectItem value="performance">Performance Only</SelectItem>
             </SelectContent>
           </Select>
+          */}
         </div>
         
+        {/*
         <div className="flex items-center space-x-3">
           <Button 
             variant="secondary" 
@@ -96,7 +99,7 @@ export default function FilterBar({
             <FileCode className="mr-2 h-4 w-4" />
             Export JSON
           </Button>
-        </div>
+        </div>*/}
       </div>
     </div>
   );

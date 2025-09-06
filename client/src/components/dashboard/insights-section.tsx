@@ -10,6 +10,7 @@ export default function InsightsSection({ analysis }: InsightsSectionProps) {
   const topKeywords = analysis?.keywords?.slice(0, 3) || [];
   const competitors = analysis?.competitors || [];
 
+  /*
   const recentChanges = [
     {
       title: "SEO Score improved",
@@ -33,11 +34,13 @@ export default function InsightsSection({ analysis }: InsightsSectionProps) {
       color: "text-orange-600 bg-orange-100 dark:bg-orange-900/20"
     }
   ];
+  */
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
       {/* Top Keywords */}
+      {/*
       <Card data-testid="card-top-keywords">
         <CardHeader>
           <CardTitle>Top Keywords</CardTitle>
@@ -71,7 +74,7 @@ export default function InsightsSection({ analysis }: InsightsSectionProps) {
             )}
           </div>
         </CardContent>
-      </Card>
+      </Card>*/}
 
       {/* Competitor Analysis */}
       <Card data-testid="card-competitor-analysis">
@@ -111,6 +114,7 @@ export default function InsightsSection({ analysis }: InsightsSectionProps) {
       </Card>
 
       {/* Recent Changes */}
+      {/*
       <Card data-testid="card-recent-changes">
         <CardHeader>
           <CardTitle>Recent Changes</CardTitle>
@@ -137,7 +141,7 @@ export default function InsightsSection({ analysis }: InsightsSectionProps) {
             })}
           </div>
         </CardContent>
-      </Card>
+      </Card>*/}
     </div>
   );
 }

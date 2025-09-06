@@ -21,7 +21,10 @@ export default function MetricCard({
   icon, 
   color, 
   description 
-}: MetricCardProps) {
+}: MetricCardProps) 
+
+{
+  /*
   const getTrendIcon = () => {
     switch (trend) {
       case "up": return <TrendingUp className="h-4 w-4" />;
@@ -39,6 +42,7 @@ export default function MetricCard({
       default: return "trend-stable";
     }
   };
+  */
 
   const getIconColorClasses = () => {
     const colorMap = {
@@ -53,15 +57,18 @@ export default function MetricCard({
   };
 
   // Generate sparkline data points for visual trend
+  /*
   const sparklinePoints = Array.from({ length: 12 }, (_, i) => {
     const baseValue = 50;
     const variation = trend === "up" ? i * 2 : trend === "down" ? -i * 1.5 : Math.sin(i) * 5;
     return Math.max(10, Math.min(90, baseValue + variation + (Math.random() - 0.5) * 10));
   });
+  
 
   const pathData = sparklinePoints
     .map((point, index) => `${index === 0 ? 'M' : 'L'} ${(index / 11) * 100} ${100 - point}`)
     .join(' ');
+  */
 
   return (
     <Tooltip>
@@ -75,17 +82,20 @@ export default function MetricCard({
           data-testid={`card-metric-${title.toLowerCase().replace(/\s+/g, '-')}`}
           className="group"
         >
+          
           <div className="metric-card">
             {/* Header with icon and trend */}
             <div className="flex items-start justify-between mb-6">
               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow", getIconColorClasses())}>
                 <i className={cn(icon, "text-xl")}></i>
               </div>
-              <div className={cn("text-sm font-semibold", getTrendClass())}>
-                {getTrendIcon()}
-                <span>{change > 0 ? '+' : ''}{change}%</span>
+              
+              <div className={cn("text-sm font-semibold")}>
+               
+                <span></span>
               </div>
             </div>
+
 
             {/* Title and Value */}
             <div className="mb-4">
@@ -111,6 +121,7 @@ export default function MetricCard({
                     <stop offset="100%" stopColor="currentColor" stopOpacity="0"/>
                   </linearGradient>
                 </defs>
+                {/*
                 <path
                   d={`${pathData} L 100 100 L 0 100 Z`}
                   fill={`url(#gradient-${title})`}
@@ -130,13 +141,13 @@ export default function MetricCard({
                     trend === "down" ? "text-destructive" : 
                     "text-primary"
                   )}
-                />
+                />*/}
               </svg>
             </div>
 
             {/* Footer */}
             <p className="text-xs text-muted-foreground font-medium">
-              vs. previous period
+              
             </p>
           </div>
         </motion.div>
@@ -147,3 +158,4 @@ export default function MetricCard({
     </Tooltip>
   );
 }
+

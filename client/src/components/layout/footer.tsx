@@ -12,11 +12,11 @@ export default function Footer() {
               <div className="w-6 h-6 gradient-bg rounded-lg flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-white" />
               </div>
-              <span className="text-sm font-semibold text-foreground">RankPro Analytics</span>
+              <span className="text-sm font-semibold text-foreground">Rank Analytics</span>
             </div>
             <div className="hidden md:block w-px h-4 bg-border"></div>
             <p className="text-xs text-muted-foreground">
-              © 2024 All rights reserved
+              © 2025 All rights reserved
             </p>
           </div>
 
@@ -28,7 +28,7 @@ export default function Footer() {
               <div className="flex items-center space-x-1">
                 <Activity className="h-3 w-3 text-success" />
                 <span className="text-xs text-muted-foreground" data-testid="text-system-status">
-                  All systems operational
+                  {/*All systems operational*/}
                 </span>
               </div>
             </div>

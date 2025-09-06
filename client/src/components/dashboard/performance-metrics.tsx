@@ -14,7 +14,7 @@ const performanceMetrics = [
     icon: "fas fa-rocket",
     color: "chart-1",
     value: 89,
-    change: 5,
+    change: 4,
     trend: "up"
   },
   {
@@ -48,31 +48,31 @@ const performanceMetrics = [
 
 export default function PerformanceMetrics({ analysis }: PerformanceMetricsProps) {
   const getTrendIcon = (trend: string) => {
-    switch (trend) {
+    switch (trend) {/*
       case "up": return <ArrowUp className="h-3 w-3" />;
       case "down": return <ArrowDown className="h-3 w-3" />;
       case "stable": return <Minus className="h-3 w-3" />;
-      default: return <Minus className="h-3 w-3" />;
+      default: return <Minus className="h-3 w-3" />;*/
     }
   };
 
   const getTrendColor = (trend: string) => {
-    switch (trend) {
+    switch (trend) {/*
       case "up": return "text-green-600";
       case "down": return "text-destructive";
       case "stable": return "text-muted-foreground";
-      default: return "text-muted-foreground";
+      default: return "text-muted-foreground";*/
     }
   };
 
-  const getColorClasses = (color: string) => {
+  const getColorClasses = (color: string) => {/*
     const colorMap = {
       "chart-1": "bg-[hsl(var(--chart-1)_/_0.1)] text-[hsl(var(--chart-1))]",
       "chart-2": "bg-[hsl(var(--chart-2)_/_0.1)] text-[hsl(var(--chart-2))]",
       "chart-3": "bg-[hsl(var(--chart-3)_/_0.1)] text-[hsl(var(--chart-3))]",
       "chart-4": "bg-[hsl(var(--chart-4)_/_0.1)] text-[hsl(var(--chart-4))]",
     };
-    return colorMap[color as keyof typeof colorMap] || colorMap["chart-1"];
+    return colorMap[color as keyof typeof colorMap] || colorMap["chart-1"];*/
   };
 
   return (
@@ -94,7 +94,7 @@ export default function PerformanceMetrics({ analysis }: PerformanceMetricsProps
               data-testid={`row-metric-${metric.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <div className="flex items-center space-x-3">
-                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", getColorClasses(metric.color))}>
+                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center" )}>
                   <i className={cn(metric.icon, "text-sm")}></i>
                 </div>
                 <div>
@@ -106,8 +106,8 @@ export default function PerformanceMetrics({ analysis }: PerformanceMetricsProps
                 <p className="text-lg font-bold text-foreground" data-testid={`text-${metric.name.toLowerCase().replace(/\s+/g, '-')}-value`}>
                   {analysis?.metrics?.[metric.name.toLowerCase().replace(/\s+/g, '')] || metric.value}
                 </p>
-                <div className={cn("text-xs font-medium flex items-center justify-end", getTrendColor(metric.trend))}>
-                  {metric.change > 0 ? '+' : ''}{metric.change}% {getTrendIcon(metric.trend)}
+                <div className={cn("text-xs font-medium flex items-center justify-end")}>
+                 
                 </div>
               </div>
             </div>
