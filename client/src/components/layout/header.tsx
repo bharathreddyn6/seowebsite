@@ -1,8 +1,9 @@
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
-import { Bell, Moon, Sun, Clock, Sparkles, LogIn } from "lucide-react";
+import { Moon, Sun, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
+import LoginPage from "@/pages/login";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();

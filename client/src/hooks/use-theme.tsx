@@ -26,21 +26,30 @@ export function ThemeProvider({
   storageKey = "theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return (window.localStorage.getItem(storageKey) as Theme) || defaultTheme;
+      }
+    } catch {}
+    return defaultTheme;
+  });
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root = typeof document !== "undefined" ? document.documentElement : null;
 
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
+    root?.classList?.remove("light", "dark");
+    root?.classList?.add(theme);
   }, [theme]);
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem(storageKey, theme);
+        }
+      } catch {}
       setTheme(theme);
     },
   };
