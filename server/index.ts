@@ -1,17 +1,17 @@
-import express, { type Request, Response, NextFunction } from "express";
+import "dotenv/config";
+import express from "express";
 import { registerRoutes } from "./routes";
 import { createServer } from "http";
-import { setupVite, serveStatic, log } from "./vite";
+import { serveStatic, log } from "./vite";
 import { connectMongo } from "./db";
 import { authRouter } from "./auth";
-
 
 const app = express();
 app.use(express.json());
 app.use((await import("cors")).default());
 app.use(express.urlencoded({ extended: false }));
-app.use("/api/auth", authRouter);
 
+// Request logger
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
@@ -22,26 +22,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Ensure MongoDB connection (will warn and skip if no MONGODB_URI is set)
+  await connectMongo().catch((err) => {
+    console.error("Failed to connect MongoDB:", err?.message);
+  });
+
+  // Routers
+  app.use("/api/auth", authRouter);
   await registerRoutes(app);
+
   const server = createServer(app);
 
-  // if build exists, serve static client
+  // Serve static client if build exists
   try {
     serveStatic(app);
   } catch (err) {
     log("No client build found; skipping static serve", "express");
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  const port = parseInt(process.env.PORT || "5000", 10);
+  const host = process.env.HOST || "0.0.0.0";
+  const listenOptions: any = { port, host };
+  // reusePort is not supported on Windows; enabling it there causes ENOTSUP
+  if (process.platform !== "win32") {
+    (listenOptions as any).reusePort = true;
+  }
+
+  server.listen(listenOptions, () => {
     log(`serving on port ${port}`);
   });
 })();

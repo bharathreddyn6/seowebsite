@@ -80,10 +80,12 @@ export default function SignupPage() {
         credentials: "include",
       });
 
-      const data = await res.json();
+      // Safely parse JSON (handles empty or non-JSON responses)
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
 
       if (!res.ok) {
-        throw new Error(data.message || "Signup failed");
+        throw new Error(data.message || `Signup failed (${res.status})`);
       }
 
       toast({ 
@@ -272,7 +274,7 @@ export default function SignupPage() {
                       onClick={goToLogin}
                       className="text-primary hover:underline font-medium"
                     >
-                      Sign in
+                      Log in
                     </button>
                   </div>
                 </div>
