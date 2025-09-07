@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { createServer } from "http";
 import { setupVite, serveStatic, log } from "./vite";
 import { connectMongo } from "./db";
 import { authRouter } from "./auth";
@@ -20,11 +21,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  await registerRoutes(app);
+  const server = createServer(app);
 
   // if build exists, serve static client
   try {
     serveStatic(app);
+  } catch (err) {
+    log("No client build found; skipping static serve", "express");
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
