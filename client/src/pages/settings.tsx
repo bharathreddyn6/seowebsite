@@ -206,8 +206,8 @@ export default function Settings() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="light">Dark</SelectItem>
+                        <SelectItem value="dark">Light</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

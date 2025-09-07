@@ -1,10 +1,16 @@
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
-import { Bell, Moon, Sun, Clock, Sparkles } from "lucide-react";
+import { Bell, Moon, Sun, Clock, Sparkles, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
+  const [, setLocation] = useLocation();
+
+  const handleLoginClick = () => {
+    setLocation("/login");
+  };
 
   return (
     <header className="bg-background/80 backdrop-blur-sm border-b border-border/50 px-6 py-4 sticky top-0 z-40">
@@ -92,14 +98,20 @@ export default function Header() {
           </motion.div>
           */}
 
-          {/* Premium Badge .......... add Login/SignUp Page */}
+          {/* Login Button */}
           <motion.div 
-            className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full border border-primary/20"
             whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.2 }}
           >
-            <Sparkles className="h-3 w-3 text-secondary" />
-            <span className="text-xs font-semibold text-foreground">Login</span>
+            <Button
+              onClick={handleLoginClick}
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground rounded-full transition-all duration-200"
+              data-testid="button-login"
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="text-sm font-semibold">Login/SignUp</span>
+            </Button>
           </motion.div>
         </motion.div>
       </div>

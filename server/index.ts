@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { connectMongo } from "./db";
 import { authRouter } from "./auth";
 
+
 const app = express();
 app.use(express.json());
 app.use((await import("cors")).default());
