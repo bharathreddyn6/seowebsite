@@ -49,6 +49,12 @@ export default function LoginPage() {
       if (data.token) {
         localStorage.setItem("auth_token", data.token);
       }
+      // Store user object for header display
+      if (data.user) {
+        try {
+          localStorage.setItem("auth_user", JSON.stringify(data.user));
+        } catch {}
+      }
 
       toast({ 
         title: "Welcome back!", 

@@ -11,6 +11,7 @@ import { Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useLocation } from "wouter";
 
 const urlSchema = z.object({
   url: z.string().url("Please enter a valid URL").refine((url) => {
@@ -29,6 +30,7 @@ export default function URLAnalyzer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [lastResult, setLastResult] = useState<any>(null);
+  const [, setLocation] = useLocation();
 
   const form = useForm<UrlFormData>({
     resolver: zodResolver(urlSchema),
@@ -71,6 +73,21 @@ export default function URLAnalyzer() {
 
 
   const onSubmit = (data: UrlFormData) => {
+    // Redirect to login if not authenticated
+    try {
+      const token = localStorage.getItem("auth_token");
+      const user = localStorage.getItem("auth_user");
+      if (!token && !user) {
+        toast({
+          title: "Authentication required",
+          description: "Please LogIn before analyzing",
+          variant: "destructive",
+        });
+        setLocation("/login");
+        return;
+      }
+    } catch {}
+
     analyzeMutation.mutate(data);
   };
 

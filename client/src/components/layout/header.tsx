@@ -1,17 +1,53 @@
+import { useEffect, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import LoginPage from "@/pages/login";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [, setLocation] = useLocation();
+  const [userName, setUserName] = useState<string | null>(null);
+  const initial = userName?.trim()?.charAt(0)?.toUpperCase() || null;
 
   const handleLoginClick = () => {
     setLocation("/login");
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    setUserName(null);
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUserName(parsed?.name || null);
+      }
+    } catch {}
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "auth_user") {
+        try {
+          const raw = e.newValue;
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            setUserName(parsed?.name || null);
+          } else {
+            setUserName(null);
+          }
+        } catch {
+          setUserName(null);
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   return (
     <header className="bg-background/80 backdrop-blur-sm border-b border-border/50 px-6 py-4 sticky top-0 z-40">
@@ -77,43 +113,48 @@ export default function Header() {
             </Button>
           </motion.div>
           
-          {/* Notifications */}
-          {/*
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-10 h-10 p-0 relative border-border/50 hover:border-primary/50 transition-all duration-200"
-              aria-label="Notifications"
-              data-testid="button-notifications"
-            >
-              <Bell className="h-4 w-4" />
-              <motion.span 
-                className="absolute -top-1 -right-1 w-3 h-3 bg-secondary rounded-full flex items-center justify-center"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
+          {/* Auth Area */}
+          {userName ? (
+            <div className="flex items-center gap-2">
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
-                <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
-              </motion.span>
-            </Button>
-          </motion.div>
-          */}
-
-          {/* Login Button */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Button
-              onClick={handleLoginClick}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground rounded-full transition-all duration-200"
-              data-testid="button-login"
+                <Button
+                  onClick={() => setLocation("/settings")}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground"
+                  aria-label="Account"
+                  data-testid="button-account"
+                >
+                  <span className="text-sm font-bold">{initial}</span>
+                </Button>
+              </motion.div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="border-border/50"
+              >
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
-              <LogIn className="h-4 w-4" />
-              <span className="text-sm font-semibold">Login/SignUp</span>
-            </Button>
-          </motion.div>
+              <Button
+                onClick={handleLoginClick}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground rounded-full transition-all duration-200"
+                data-testid="button-login"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="text-sm font-semibold">Login/SignUp</span>
+              </Button>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </header>

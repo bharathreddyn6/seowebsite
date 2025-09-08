@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -31,6 +32,17 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem("initial_logout_done")) {
+        if (window.location.pathname === "/") {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("auth_user");
+        }
+        sessionStorage.setItem("initial_logout_done", "1");
+      }
+    } catch {}
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
