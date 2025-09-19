@@ -106,12 +106,55 @@ export default function Settings() {
     }
   }, [form]);
 
-  const onSubmit = (data: ProfileFormData) => {
-    toast({
-      title: "Settings Updated",
-      description: "Your profile settings have been saved successfully.",
-    });
-    console.log(data);
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You are not authenticated.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/auth/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: data.name }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const updatedUser = await response.json();
+
+      // Update user in localStorage
+      const rawUser = localStorage.getItem("auth_user");
+      if (rawUser) {
+        const user = JSON.parse(rawUser);
+        user.name = updatedUser.name;
+        localStorage.setItem("auth_user", JSON.stringify(user));
+      }
+
+      // Also update the state
+      setCurrentUser(prev => prev ? { ...prev, name: updatedUser.name } : null);
+
+      toast({
+        title: "Settings Updated",
+        description: "Your profile settings have been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: (error as Error).message || "An unknown error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportData = () => {
@@ -201,7 +244,7 @@ export default function Settings() {
                             <FormItem>
                               <FormLabel>Email Address</FormLabel>
                               <FormControl>
-                                <Input type="email" {...field} data-testid="input-email" />
+                                <Input type="email" {...field} data-testid="input-email" readOnly />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -214,7 +257,7 @@ export default function Settings() {
                             <FormItem>
                               <FormLabel>User ID</FormLabel>
                               <FormControl>
-                                <Input {...field} data-testid="input-user-id" />
+                                <Input {...field} data-testid="input-user-id" readOnly />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

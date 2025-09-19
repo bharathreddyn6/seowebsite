@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "./db";
+import { authenticateToken, AuthenticatedRequest } from "./middleware/auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 
@@ -76,6 +77,35 @@ authRouter.post("/login", async (req, res) => {
     });
   } catch (err: any) {
     return res.status(500).json({ message: err.message || "Failed to login" });
+  }
+});
+
+authRouter.put("/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { name } = req.body;
+    const userId = req.user?.id;
+
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { name },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      id: updatedUser._id.toString(),
+      email: updatedUser.email,
+      name: updatedUser.name,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message || "Failed to update profile" });
   }
 });
 
