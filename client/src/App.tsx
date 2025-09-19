@@ -14,6 +14,7 @@ import Settings from "@/pages/settings";
 import SEOHelmet from "@/lib/seo";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
+import ExportPage from "@/pages/export";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/export" component={ExportPage} />
       <Route component={NotFound} />
     </Switch>
   );
