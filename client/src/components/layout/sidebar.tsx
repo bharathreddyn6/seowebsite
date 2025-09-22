@@ -243,7 +243,7 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* User Profile */}
+      {/* User Plan */}
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-md">
@@ -261,11 +261,11 @@ export default function Sidebar() {
               >
                 <div className="flex items-center space-x-2">
                   <p className="text-sm font-semibold text-sidebar-foreground truncate" data-testid="text-username">
-                    John Smith
+                    Free Plan
                   </p>
-                  <Crown className="h-3 w-3 text-secondary" />
+                  {/*<Crown className="h-3 w-3 text-secondary" />*/}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">Pro Plan</p>
+                <p className="text-xs text-muted-foreground truncate">Free plan with limited features</p>
               </motion.div>
             )}
           </AnimatePresence>
