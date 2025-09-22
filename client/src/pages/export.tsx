@@ -13,41 +13,30 @@ import Footer from "@/components/layout/footer";
 import { useQuery } from "@tanstack/react-query";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { MetricData } from "@/data/mock-data";
+import axios from "axios";
+
+// More accurate type for the analysis data from the API
+interface AnalysisData {
+  id: string;
+  createdAt: string;
+  url: string;
+  overallScore: number;
+  seoScore: number;
+  brandScore: number;
+  socialScore: number;
+  performanceScore: number;
+}
 
 export default function ExportPage() {
-  const { data: analyses, isLoading } = useQuery<MetricData[]>({
+  const { data: analyses, isLoading } = useQuery<AnalysisData[]>({
     queryKey: ["/api/analyses"],
     queryFn: async () => {
-      // a mock api call
-      const response = await new Promise<MetricData[]>((resolve) =>
-        setTimeout(
-          () =>
-            resolve([
-              {
-                overallScore: 85,
-                seoScore: 90,
-                brandScore: 80,
-                socialScore: 75,
-                performanceScore: 95,
-                metrics: {
-                  pageSpeed: 90,
-                  mobileScore: 85,
-                  security: 95,
-                  userExperience: 80,
-                },
-                keywords: [],
-                competitors: [],
-              },
-            ]),
-          1000
-        )
-      );
-      return response;
+      const { data } = await axios.get("/api/analyses");
+      return data;
     },
   });
 
-  const latestAnalysis = Array.isArray(analyses) ? analyses[0] : undefined;
+  const latestAnalysis = Array.isArray(analyses) && analyses.length > 0 ? analyses[0] : undefined;
 
   const handleDownloadPdf = () => {
     const input = document.getElementById("pdf-content");
