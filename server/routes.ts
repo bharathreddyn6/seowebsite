@@ -34,7 +34,7 @@ async function computeScores(info: any) {
     checks.wordCountScore * 20
   );
 
-  let brand = (info.ogTitle || info.ogImage ? 70 : 50) + (info.brandMentions ? 10 : 0);
+  let brand = (info.ogTitle || info.ogImage ? 70 : 50);
   const BRAND_SCORE_API_KEY = process.env.BRAND_SCORE;
 
   if (BRAND_SCORE_API_KEY && BRAND_SCORE_API_KEY !== "your_brand_score_api_key_here") {
