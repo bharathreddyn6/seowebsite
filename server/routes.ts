@@ -9,7 +9,7 @@ function scoreRange(val: number, max = 100) {
   return Math.max(0, Math.min(Math.round(val), max));
 }
 
-function computeScores(info: any) {
+async function computeScores(info: any) {
   const checks = {
     hasTitle: info.title ? 1 : 0,
     titleLenGood: info.title && info.title.length >= 10 && info.title.length <= 60 ? 1 : 0,
@@ -34,7 +34,31 @@ function computeScores(info: any) {
     checks.wordCountScore * 20
   );
 
-  const brand = (info.ogTitle || info.ogImage ? 70 : 50) + (info.brandMentions ? 10 : 0);
+  let brand = (info.ogTitle || info.ogImage ? 70 : 50) + (info.brandMentions ? 10 : 0);
+  const BRAND_SCORE_API_KEY = process.env.BRAND_SCORE;
+
+  if (BRAND_SCORE_API_KEY && BRAND_SCORE_API_KEY !== "your_brand_score_api_key_here") {
+    try {
+      // This is a placeholder API endpoint.
+      // Replace with your actual brand score API.
+      const brandScoreUrl = `https://api.brandscore.dev/v1/score?url=${encodeURIComponent(info.url)}`;
+      const response = await fetch(brandScoreUrl, {
+        headers: {
+          'Authorization': `Bearer ${BRAND_SCORE_API_KEY}`
+        }
+      });
+
+      if (response.ok) {
+        const data: any = await response.json();
+        if (typeof data.score === 'number') {
+          brand = data.score;
+        }
+      }
+    } catch (e) {
+      console.error("Brand score API call failed, falling back to default calculation.", e);
+    }
+  }
+
   const social = (info.twitterCard || info.ogTitle ? 70 : 50);
 
   let perf = 70;
@@ -126,11 +150,10 @@ export async function registerRoutes(app: Express) {
         ogImage,
         twitterCard,
         wordCount,
-        brandMentions: false,
         headers,
       };
 
-      const scores = computeScores(info);
+      const scores = await computeScores(info);
 
       const analysis = {
         id: "a" + Date.now(),
