@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Switch, Route } from "wouter";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,6 +16,8 @@ import SEOHelmet from "@/lib/seo";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
 import ExportPage from "@/pages/export";
+
+const GOOGLE_CLIENT_ID = "562847316557-10l5a5cnlmvq1doa7ras83em6m9tuv86.apps.googleusercontent.com";
 
 function Router() {
   return (
@@ -46,13 +49,15 @@ function App() {
     } catch {}
   }, []);
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SEOHelmet />
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SEOHelmet />
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }
 

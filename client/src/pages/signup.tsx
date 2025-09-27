@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Helmet } from "react-helmet-async";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,48 @@ export default function SignupPage() {
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Google signup failed");
+      }
+
+      if (data.token) {
+        localStorage.setItem("auth_token", data.token);
+      }
+      if (data.user) {
+        try {
+          localStorage.setItem("auth_user", JSON.stringify(data.user));
+        } catch {}
+      }
+
+      toast({
+        title: "Welcome!",
+        description: "Your account has been created successfully with Google.",
+      });
+
+      setLocation("/");
+    } catch (err: any) {
+      toast({
+        title: "Google signup failed",
+        description: err.message || "An error occurred during Google signup",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const validateForm = () => {
@@ -265,6 +308,29 @@ export default function SignupPage() {
                 >
                   {loading ? "Creating account..." : "Create account"}
                 </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => {
+                    toast({
+                      title: "Google signup failed",
+                      description: "An error occurred during Google signup",
+                      variant: "destructive",
+                    });
+                  }}
+                  useOneTap
+                />
 
                 <div className="text-center">
                   <div className="text-sm text-muted-foreground">

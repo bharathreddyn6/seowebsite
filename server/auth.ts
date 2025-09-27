@@ -1,8 +1,12 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import mongoose from "./db";
 import { authenticateToken, AuthenticatedRequest } from "./middleware/auth";
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 
@@ -11,7 +15,9 @@ const userSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: false },
+    googleId: { type: String, unique: true, sparse: true },
+    imageUrl: { type: String },
   },
   { timestamps: true }
 );
@@ -106,6 +112,54 @@ authRouter.put("/me", authenticateToken, async (req: AuthenticatedRequest, res) 
     });
   } catch (err: any) {
     return res.status(500).json({ message: err.message || "Failed to update profile" });
+  }
+});
+
+authRouter.post("/google", async (req, res) => {
+  try {
+    const { token: googleToken } = req.body;
+    const ticket = await client.verifyIdToken({
+        idToken: googleToken,
+        audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      return res.status(400).json({ message: "Invalid Google token" });
+    }
+
+    const { sub: googleId, email, name, picture: imageUrl } = payload;
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      user = await User.findOne({ email });
+      if (user) {
+        user.googleId = googleId;
+        user.imageUrl = user.imageUrl || imageUrl;
+        await user.save();
+      } else {
+        user = await User.create({
+          googleId,
+          email,
+          name,
+          imageUrl,
+        });
+      }
+    }
+
+    const token = jwt.sign({ sub: user._id.toString(), email: user.email }, JWT_SECRET, { expiresIn: "7d" });
+
+    return res.json({
+      token,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        imageUrl: user.imageUrl,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message || "Failed to authenticate with Google" });
   }
 });
 
