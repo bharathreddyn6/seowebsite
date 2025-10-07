@@ -1,4 +1,4 @@
-import { useState } from "react";
+// no local UI state for last result; results are fetched via React Query
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +35,10 @@ export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysi
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // keep component state minimal
+  const [, setLocation] = useLocation();
+
+
   const form = useForm<UrlFormData>({
     resolver: zodResolver(urlSchema),
     defaultValues: {
@@ -43,6 +47,7 @@ export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysi
   });
 
   const analyzeMutation = useMutation({
+
     mutationFn: async (data: UrlFormData) => {
       // Sanitize URL input
       const sanitizedUrl = DOMPurify.sanitize(data.url);
@@ -69,6 +74,7 @@ export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysi
       if (onAnalysisError) onAnalysisError(error.message || "Failed to analyze website");
     },
   });
+
 
   const onSubmit = (data: UrlFormData) => {
     analyzeMutation.mutate(data);
@@ -119,6 +125,9 @@ export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysi
             </Button>
           </form>
         </Form>
+
+        {/* Latest analysis UI removed - analyses are shown on the SEO Rankings page */}
+
       </div>
     </div>
   );

@@ -41,9 +41,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         mentions = 0;
       }
-
       // --- 2) Domain Authority from OpenPageRank (free) ---
       let domainAuthority = 0;
+
       try {
         const daRes = await fetch(
           `https://openpagerank.com/api/v1.0/getPageRank?domains[]=${domain}`,
@@ -61,7 +61,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         domainAuthority = 0;
       }
-
       // --- 3) Trust Score using Google Safe Browsing ---
       let trustScore = 100;
       try {
@@ -94,6 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trustScore = 70;
       }
 
+
       // --- 4) Brand Score (weighted average) ---
       const brandScore = Math.min(
         100,
@@ -115,10 +115,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Keep your old endpoints (SEO, analyses, export, etc.)
   // ... (leave them as they are in your file)
 
   const httpServer = createServer(app);
   return httpServer;
+
 }

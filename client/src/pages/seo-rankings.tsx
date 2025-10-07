@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -36,19 +37,24 @@ export default function SEORankings() {
   const { data: analyses, isLoading } = useQuery({
     queryKey: ["analyses"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:5000/api/analyses");
-      if (!res.ok) throw new Error("Failed to fetch analyses");
+      const res = await apiRequest("GET", "/api/analyses");
       return res.json();
     },
   });
 
-  const latestAnalysis = Array.isArray(analyses) ? analyses[0] : undefined;
+  // Normalize API response: server may return an array or a paginated object { items, total, page }
+  const latestAnalysis = Array.isArray(analyses)
+    ? analyses[0]
+    : analyses?.items && Array.isArray(analyses.items)
+    ? analyses.items[0]
+    : undefined;
 
+  // Build metrics from latest analysis (fallbacks provided)
   const seoMetrics = [
     {
       title: "SEO Score",
-      value: latestAnalysis?.seoScore || 0,
-      change: 8,
+      value: latestAnalysis?.seoScore ?? latestAnalysis?.kpis?.seo_score ?? 0,
+      change:  latestAnalysis?.kpis ?  ( (latestAnalysis.kpis.seo_score || 0) - (latestAnalysis.previousSeoScore || 0) ) : 0,
       trend: "up" as const,
       icon: "fas fa-search",
       color: "primary",
@@ -56,8 +62,8 @@ export default function SEORankings() {
     },
     {
       title: "Organic Traffic",
-      value: 85,
-      change: 12,
+      value: latestAnalysis?.kpis?.organic_traffic ?? latestAnalysis?.kpis?.organicTraffic ?? 0,
+      change: 0,
       trend: "up" as const,
       icon: "fas fa-users",
       color: "chart-1",
@@ -65,8 +71,8 @@ export default function SEORankings() {
     },
     {
       title: "Keyword Rankings",
-      value: 156,
-      change: 5,
+      value: latestAnalysis?.kpis?.keyword_rankings ?? latestAnalysis?.keywords?.length ?? 0,
+      change: 0,
       trend: "up" as const,
       icon: "fas fa-key",
       color: "chart-2",
@@ -74,8 +80,8 @@ export default function SEORankings() {
     },
     {
       title: "Backlinks",
-      value: 247,
-      change: -2,
+      value: latestAnalysis?.kpis?.backlinks ?? latestAnalysis?.backlinks ?? 0,
+      change: 0,
       trend: "down" as const,
       icon: "fas fa-link",
       color: "chart-3",
@@ -83,12 +89,19 @@ export default function SEORankings() {
     },
   ];
 
-  const seoIssues = [
-    { title: "Missing meta descriptions", priority: "High", count: 12 },
-    { title: "Slow loading pages", priority: "Medium", count: 5 },
-    { title: "Broken internal links", priority: "Low", count: 3 },
-    { title: "Missing alt tags", priority: "Medium", count: 8 },
-  ];
+  const seoIssues = latestAnalysis
+    ? [
+        { title: "Missing meta descriptions", priority: latestAnalysis.issues?.missing_meta_descriptions ? "High" : "Low", count: latestAnalysis.issues?.missing_meta_descriptions ?? (latestAnalysis.metaDescription ? 0 : 1) },
+        { title: "Slow loading pages", priority: latestAnalysis.issues?.slow_loading_pages ? "Medium" : "Low", count: latestAnalysis.issues?.slow_loading_pages ?? (latestAnalysis.responseTimeMs > 1000 ? 1 : 0) },
+        { title: "Broken internal links", priority: "Low", count: latestAnalysis.issues?.broken_internal_links ?? 0 },
+        { title: "Missing alt tags", priority: latestAnalysis.issues?.missing_alt_tags && latestAnalysis.issues?.missing_alt_tags > 5 ? "Medium" : "Low", count: latestAnalysis.issues?.missing_alt_tags ?? 0 },
+      ]
+    : [
+        { title: "Missing meta descriptions", priority: "High", count: 12 },
+        { title: "Slow loading pages", priority: "Medium", count: 5 },
+        { title: "Broken internal links", priority: "Low", count: 3 },
+        { title: "Missing alt tags", priority: "Medium", count: 8 },
+      ];
 
   if (isLoading) {
     return (
