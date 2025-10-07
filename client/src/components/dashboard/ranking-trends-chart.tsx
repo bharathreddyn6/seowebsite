@@ -11,20 +11,28 @@ interface RankingTrendsChartProps {
 
 export default function RankingTrendsChart({ period }: RankingTrendsChartProps) {
   const [selectedDays, setSelectedDays] = useState(period);
+  const fetchTrend = async (type: string, days: string) => {
+    const res = await fetch(`/api/trends/${type}/${days}`);
+    if (!res.ok) return null;
+    return res.json();
+  };
 
   const { data: seoTrends } = useQuery({
     queryKey: ['/api/trends/seo', selectedDays],
+    queryFn: () => fetchTrend('seo', selectedDays),
   });
 
   const { data: brandTrends } = useQuery({
     queryKey: ['/api/trends/brand', selectedDays],
+    queryFn: () => fetchTrend('brand', selectedDays),
   });
 
   const { data: socialTrends } = useQuery({
     queryKey: ['/api/trends/social', selectedDays],
+    queryFn: () => fetchTrend('social', selectedDays),
   });
 
-  // Enhanced mock data for demonstration
+  // Enhanced mock data for demonstration (fallback)
   const mockData = [
     { date: '2024-08-25', seo: 85, brand: 75, social: 80 },
     { date: '2024-08-26', seo: 87, brand: 73, social: 82 },
@@ -34,6 +42,32 @@ export default function RankingTrendsChart({ period }: RankingTrendsChartProps) 
     { date: '2024-08-30', seo: 92, brand: 77, social: 84 },
     { date: '2024-09-01', seo: 92, brand: 78, social: 84 },
   ];
+
+  // Map the backend trend format (if present) into chart data array: expecting { data: [{ _id: 'YYYY-MM-DD', avgScore: num}, ...] }
+  const mapTrend = (t: any) => {
+    if (!t || !t.data || !Array.isArray(t.data) || t.data.length === 0) return null;
+    return t.data.map((row: any) => ({ date: row._id, value: Math.round(row.avgScore || 0) }));
+  };
+
+  const seoMapped = mapTrend(seoTrends);
+  const brandMapped = mapTrend(brandTrends);
+  const socialMapped = mapTrend(socialTrends);
+
+  // Merge mapped arrays into one chart dataset if available, otherwise use mockData
+  let chartData = mockData;
+  if (seoMapped || brandMapped || socialMapped) {
+    const dates = new Set<string>();
+    (seoMapped || []).forEach((r: any) => dates.add(r.date));
+    (brandMapped || []).forEach((r: any) => dates.add(r.date));
+    (socialMapped || []).forEach((r: any) => dates.add(r.date));
+    const sortedDates = Array.from(dates).sort();
+    chartData = sortedDates.map((d) => ({
+      date: d,
+      seo: (seoMapped && seoMapped.find((x: any) => x.date === d)?.value) ?? null,
+      brand: (brandMapped && brandMapped.find((x: any) => x.date === d)?.value) ?? null,
+      social: (socialMapped && socialMapped.find((x: any) => x.date === d)?.value) ?? null,
+    }));
+  }
 
   return (
     <motion.div
@@ -91,7 +125,7 @@ export default function RankingTrendsChart({ period }: RankingTrendsChartProps) 
           {/* Enhanced Chart */}
           <div className="h-[320px] chart-container" data-testid="chart-ranking-trends">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <defs>
                   <linearGradient id="seoGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>

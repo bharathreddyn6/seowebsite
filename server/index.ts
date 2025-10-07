@@ -8,7 +8,22 @@ import { authRouter } from "./auth";
 
 const app = express();
 app.use(express.json());
-app.use((await import("cors")).default());
+// Configure CORS to allow the frontend to send credentials (cookies) and reflect the origin.
+// If FRONTEND_ORIGIN is set in .env, allow only that origin; otherwise reflect the request origin.
+{
+  const cors = (await import("cors")).default;
+  const frontend = process.env.FRONTEND_ORIGIN || undefined;
+  const corsOptions: any = {
+    credentials: true,
+  };
+  if (frontend) {
+    corsOptions.origin = frontend;
+  } else {
+    // reflect the request origin (not wildcard) so Access-Control-Allow-Credentials can be true
+    corsOptions.origin = true;
+  }
+  app.use(cors(corsOptions));
+}
 app.use(express.urlencoded({ extended: false }));
 
 // Request logger

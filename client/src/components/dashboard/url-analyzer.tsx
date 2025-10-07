@@ -1,4 +1,4 @@
-import { useState } from "react";
+// no local UI state for last result; results are fetched via React Query
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,7 @@ type UrlFormData = z.infer<typeof urlSchema>;
 export default function URLAnalyzer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [lastResult, setLastResult] = useState<any>(null);
+  // keep component state minimal
   const [, setLocation] = useLocation();
 
   const form = useForm<UrlFormData>({
@@ -56,9 +56,7 @@ export default function URLAnalyzer() {
       description: `Successfully analyzed ${data.url}`,
     });
 
-    setLastResult(data); // <-- add this state if you want to show latest analysis
-
-    queryClient.invalidateQueries({ queryKey: ["/api/analyses"] });
+    queryClient.invalidateQueries({ queryKey: ["analyses"] });
 
     form.reset();
   },
@@ -142,33 +140,7 @@ export default function URLAnalyzer() {
           </form>
         </Form>
 
-        {/* ✅ Show last analysis result */}
-        {lastResult && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Latest Analysis Result</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>
-                <strong>URL:</strong> {lastResult.url}
-              </p>
-              {lastResult.seoScore !== undefined && (
-                <p>
-                  <strong>SEO Score:</strong> {lastResult.seoScore}
-                </p>
-              )}
-              {lastResult.wordCount !== undefined && (
-                <p>
-                  <strong>Word Count:</strong> {lastResult.wordCount}
-                </p>
-              )}
-              <p>
-                <strong>Created At:</strong>{" "}
-                {new Date(lastResult.createdAt).toLocaleString()}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Latest analysis UI removed - analyses are shown on the SEO Rankings page */}
       </div>
     </div>
   );

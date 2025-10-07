@@ -12,7 +12,11 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Resolve a full URL: if url is absolute, use it; otherwise prefix with VITE_API_BASE or localhost:5000
+  const base = typeof window !== "undefined" ? (import.meta.env.VITE_API_BASE as string) || "http://localhost:5000" : process.env.API_BASE || "http://localhost:5000";
+  const fullUrl = url.startsWith("http") ? url : `${base.replace(/\/$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
+
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +33,10 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const base = typeof window !== "undefined" ? (import.meta.env.VITE_API_BASE as string) || "http://localhost:5000" : process.env.API_BASE || "http://localhost:5000";
+    const path = queryKey.join("/");
+    const fullUrl = path.startsWith("http") ? path : `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 
