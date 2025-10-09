@@ -1,3 +1,4 @@
+// no local UI state for last result; results are fetched via React Query
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useLocation } from "wouter";
 
 const urlSchema = z.object({
   url: z.string().url("Please enter a valid URL").refine((url) => {
@@ -23,18 +26,11 @@ const urlSchema = z.object({
 
 type UrlFormData = z.infer<typeof urlSchema>;
 
-interface URLAnalyzerProps {
-  endpoint?: string;
-  onAnalysisComplete?: (url: string, data: any) => void;
-  onAnalysisStart?: () => void;
-  onAnalysisError?: (error: string) => void;
-}
-
-export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysisComplete, onAnalysisStart, onAnalysisError }: URLAnalyzerProps) {
+export default function URLAnalyzer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-
+  // keep component state minimal
+  const [, setLocation] = useLocation();
 
   const form = useForm<UrlFormData>({
     resolver: zodResolver(urlSchema),
@@ -44,45 +40,66 @@ export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysi
   });
 
   const analyzeMutation = useMutation({
+  mutationFn: async (data: UrlFormData) => {
+    const sanitizedUrl = DOMPurify.sanitize(data.url);
 
-    mutationFn: async (data: UrlFormData) => {
-      // Sanitize URL input
-      const sanitizedUrl = DOMPurify.sanitize(data.url);
-      const response = await apiRequest("POST", endpoint, {
-        url: sanitizedUrl,
-      });
-      return response.json();
-    },
-    onSuccess: (data, variables) => {
-      toast({
-        title: "Analysis Complete",
-        description: `Successfully analyzed ${data.domain || data.url}`,
-      });
-      queryClient.invalidateQueries({ queryKey: [endpoint, data.domain || data.url] });
-      form.reset();
-      if (onAnalysisComplete) onAnalysisComplete(variables.url, data);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Analysis Failed",
-        description: error.message || "Failed to analyze website",
-        variant: "destructive",
-      });
-      if (onAnalysisError) onAnalysisError(error.message || "Failed to analyze website");
-    },
-  });
+    const response = await apiRequest("POST", "/api/analyze", {
+      url: sanitizedUrl,
+    });
+
+    const json = await response.json();
+    return json.analysis; // ✅ only return the analysis object
+  },
+  onSuccess: (data) => {
+    toast({
+      title: "Analysis Complete",
+      description: `Successfully analyzed ${data.url}`,
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["analyses"] });
+
+    form.reset();
+  },
+  onError: (error: any) => {
+    toast({
+      title: "Analysis Failed",
+      description: error.message || "Failed to analyze website",
+      variant: "destructive",
+    });
+  },
+});
 
 
   const onSubmit = (data: UrlFormData) => {
+    // Redirect to login if not authenticated
+    try {
+      const token = localStorage.getItem("auth_token");
+      const user = localStorage.getItem("auth_user");
+      if (!token && !user) {
+        toast({
+          title: "Authentication required",
+          description: "Please LogIn before analyzing",
+          variant: "destructive",
+        });
+        setLocation("/login");
+        return;
+      }
+    } catch {}
+
     analyzeMutation.mutate(data);
   };
 
   return (
     <div className="bg-card border-b border-border px-6 py-4">
       <div className="max-w-4xl">
-        <h3 className="text-lg font-semibold text-foreground mb-3">Analyze Website</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-3">
+          Analyze Website
+        </h3>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex space-x-3">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex space-x-3"
+          >
             <div className="flex-1">
               <FormField
                 control={form.control}
@@ -124,7 +141,6 @@ export default function URLAnalyzer({ endpoint = "/api/brand-ranking", onAnalysi
         </Form>
 
         {/* Latest analysis UI removed - analyses are shown on the SEO Rankings page */}
-
       </div>
     </div>
   );

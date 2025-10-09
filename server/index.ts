@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes} from "./routes";
 import { createServer } from "http";
 import { serveStatic, log } from "./vite";
 import { connectMongo } from "./db";

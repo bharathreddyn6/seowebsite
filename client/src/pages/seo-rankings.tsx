@@ -5,7 +5,7 @@ import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import URLAnalyzer from "@/components/dashboard/url-analyzer";
+import URLAnalyzer from "@/components/dashboard/url-analyzerseo";
 import FilterBar from "@/components/dashboard/filter-bar";
 import MetricCard from "@/components/dashboard/metric-card";
 import RankingTrendsChart from "@/components/dashboard/ranking-trends-chart";
