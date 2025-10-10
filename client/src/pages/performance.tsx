@@ -4,10 +4,9 @@ import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import URLAnalyzer from "@/components/dashboard/url-analyzer";
+import URLAnalyzerPerformance from "@/components/dashboard/url-analyzerperformance";
 import FilterBar from "@/components/dashboard/filter-bar";
 import MetricCard from "@/components/dashboard/metric-card";
-import PerformanceMetrics from "@/components/dashboard/performance-metrics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -28,20 +27,50 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
+interface PerformanceData {
+  url: string;
+  performanceScore: number;
+  pageLoadTime: number;
+  coreWebVitals: {
+    LCP: number;
+    FID: number;
+    CLS: number;
+  };
+  uptime: string;
+}
+
 export default function Performance() {
   const [selectedPeriod, setSelectedPeriod] = useState("7");
   const [selectedCategory, setSelectedCategory] = useState("performance");
+  const [currentPerformanceData, setCurrentPerformanceData] = useState<PerformanceData | null>(null);
 
-  const { data: analyses, isLoading } = useQuery({
-    queryKey: ['/api/analyses'],
+  // Get latest SEO analysis for fallback data
+  const { data: analyses } = useQuery({
+    queryKey: ["analyses"],
+    queryFn: async () => {
+      const res = await fetch("/api/analyses");
+      if (!res.ok) throw new Error("Failed to fetch analyses");
+      return res.json();
+    },
   });
 
   const latestAnalysis = Array.isArray(analyses) ? analyses[0] : undefined;
 
+  // Use current performance data if available, otherwise fall back to latest analysis
+  const displayData = currentPerformanceData || {
+    url: latestAnalysis?.url || "",
+    performanceScore: latestAnalysis?.performanceScore ?? 0,
+    pageLoadTime: latestAnalysis?.pageLoadTime ?? 0,
+    uptime: latestAnalysis?.uptime ?? "99.9",
+    coreWebVitals: latestAnalysis?.coreWebVitals ?? {
+      LCP: 0, FID: 0, CLS: 0
+    },
+  };
+
   const performanceMetrics = [
     {
       title: "Performance Score",
-      value: latestAnalysis?.performanceScore || 0,
+      value: displayData.performanceScore,
       change: 3,
       trend: "up" as const,
       icon: "fas fa-bolt",
@@ -50,7 +79,7 @@ export default function Performance() {
     },
     {
       title: "Page Load Time",
-      value: 2.1,
+      value: parseFloat(displayData.pageLoadTime.toString()),
       change: -8,
       trend: "up" as const,
       icon: "fas fa-clock",
@@ -59,7 +88,7 @@ export default function Performance() {
     },
     {
       title: "Core Web Vitals",
-      value: 85,
+      value: displayData.performanceScore, // Or a more specific CWV score if available
       change: 12,
       trend: "up" as const,
       icon: "fas fa-tachometer-alt",
@@ -68,7 +97,7 @@ export default function Performance() {
     },
     {
       title: "Uptime",
-      value: 99.8,
+      value: parseFloat(displayData.uptime),
       change: 0,
       trend: "stable" as const,
       icon: "fas fa-server",
@@ -76,12 +105,26 @@ export default function Performance() {
       description: "Website uptime percentage"
     }
   ];
-
+ 
   const coreWebVitals = [
-    { name: "First Contentful Paint (FCP)", value: "1.2s", score: 92, status: "Good" },
-    { name: "Largest Contentful Paint (LCP)", value: "1.8s", score: 88, status: "Good" },
-    { name: "First Input Delay (FID)", value: "45ms", score: 95, status: "Good" },
-    { name: "Cumulative Layout Shift (CLS)", value: "0.08", score: 87, status: "Good" }
+    { 
+      name: "Largest Contentful Paint (LCP)", 
+      value: `${displayData.coreWebVitals.LCP}ms`, 
+      score: 88, 
+      status: "Good" 
+    },
+    { 
+      name: "First Input Delay (FID)", 
+      value: `${displayData.coreWebVitals.FID}ms`, 
+      score: 95, 
+      status: "Good" 
+    },
+    { 
+      name: "Cumulative Layout Shift (CLS)", 
+      value: displayData.coreWebVitals.CLS.toString(), 
+      score: 87, 
+      status: "Good" 
+    }
   ];
 
   const pageInsights = [
@@ -98,19 +141,9 @@ export default function Performance() {
     { title: "Use CDN", impact: "Medium", savings: "0.8s", status: "Recommended" }
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Loading performance data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleAnalysisComplete = (data: PerformanceData) => {
+    setCurrentPerformanceData(data);
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -118,7 +151,7 @@ export default function Performance() {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <URLAnalyzer />
+        <URLAnalyzerPerformance onAnalysisComplete={handleAnalysisComplete} />
         <FilterBar 
           selectedPeriod={selectedPeriod}
           setSelectedPeriod={setSelectedPeriod}
@@ -154,7 +187,7 @@ export default function Performance() {
               ))}
             </motion.div>
 
-            {/* Core Web Vitals and Page Insights */}
+            {/* Core Web Vitals */}
             <motion.div 
               variants={itemVariants}
               className="grid grid-cols-1 lg:grid-cols-2 gap-6"
@@ -187,7 +220,41 @@ export default function Performance() {
                 </CardContent>
               </Card>
 
-              <PerformanceMetrics analysis={latestAnalysis} />
+              {/* Performance Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Zap className="h-5 w-5" />
+                    <span>Performance Summary</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Overall Score</span>
+                      <span className="text-2xl font-bold text-foreground">
+                        {displayData.performanceScore}
+                      </span>
+                    </div>
+                    <Progress value={displayData.performanceScore} className="h-3" />
+                    
+                    <div className="pt-4 space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Load Time</span>
+                        <span className="font-medium text-foreground">
+                          {displayData.pageLoadTime}s
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Uptime</span>
+                        <span className="font-medium text-foreground">
+                          {displayData.uptime}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
 
             {/* Page Insights */}
